@@ -1,5 +1,26 @@
 {
-  "dependencies": {
-    "recharts": "^3.1.0"
+  "name": "task-manager",
+  "version": "1.0.0",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "build": "npm-run-all build:frontend build:backend",
+    "build:frontend": "cd frontend/task-manager && npm install && npm run build",
+    "build:backend": "cd backend && npm install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ayushadid/ADID-taskmanager.git"
+  },
+  "keywords": [],
+  "author": "Ayush Ghosh",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ayushadid/ADID-taskmanager/issues"
+  },
+  "homepage": "https://github.com/ayushadid/ADID-taskmanager#readme",
+  "description": "ADID full-stack task manager project",
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
   }
 }
