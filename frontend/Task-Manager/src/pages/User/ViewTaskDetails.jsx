@@ -113,19 +113,14 @@ const ViewTaskDetails = () => {
                     }
                   />
                 </div>
-                <div className="col-span-6 md:col-span-4">
-                  <label className="text-xs font-medium text-slate-500">
-                    Assigned To
-                  </label>
-                  <AvatarGroup
-                    avatars={
-                      task?.assignedTo?.map(
-                        (item) => item?.profileImageUrl
-                      ) || []
-                    }
-                    maxVisible={5}
-                  />
-                </div>
+<div className="col-span-6 md:col-span-4">
+  <InfoBox
+    label="Assigned To"
+    value={
+      task?.assignedTo?.map((user) => user.name).join(", ") || "N/A"
+    }
+  />
+</div>
               </div>
 
               <div className="mt-2">
