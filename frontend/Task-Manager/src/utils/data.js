@@ -35,7 +35,7 @@ export const SIDE_MENU_DATA=[
     {
         id:"06",
     label: "Shared Sheet",
-    path: "/admin/shared-sheet",
+    path: "/shared-sheet",
     icon: LuSheet,
   },
     {
@@ -59,6 +59,12 @@ export const SIDE_MENU_USER_DATA=[
         icon:LuClipboardCheck,
         path:"/user/tasks",
     },
+    {
+        id:"06",
+    label: "Shared Sheet",
+    path: "/shared-sheet",
+    icon: LuSheet,
+  },
     {
         id:"05",
         label:"Logout",

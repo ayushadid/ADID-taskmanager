@@ -42,7 +42,7 @@ const App = () => {
                             <Route path="/admin/create-task" element={<CreateTask />} />
                             <Route path="/admin/users" element={<ManageUsers />} />
                             <Route path="/admin/calendar" element={<TaskCalendar />} />
-                            <Route path="/admin/shared-sheet" element={<SharedSheet />} />
+                            <Route path="/shared-sheet" element={<SharedSheet />} />
                             {/* NEW ROUTE FOR USER-SPECIFIC TASKS (Admin Only) */}
                             {/* This path matches what was used in UserCard.jsx: /manage-users/:userId/tasks */}
                             <Route path="/admin/users/:userId/tasks" element={<UserTasksDetails />} />
@@ -53,6 +53,7 @@ const App = () => {
                         <Route element={<PrivateRoute allowedRoles={["member"]} />}> {/* Changed "user" to "member" based on your schema default */}
                             <Route path="/user/dashboard" element={<UserDashboard />} />
                             <Route path="/user/tasks" element={<MyTasks />} />
+                            <Route path="/shared-sheet" element={<SharedSheet />} />
                             <Route path="/user/task-details/:id" element={<ViewTaskDetails />} />
                             <Route path="/user/tasks/:taskId/timelogs" element={<TaskTimeLogsPage />} />
                         </Route>
