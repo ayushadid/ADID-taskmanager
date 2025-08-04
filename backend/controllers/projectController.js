@@ -35,10 +35,11 @@ const createProject = async (req, res) => {
 const getProjects = async (req, res) => {
   try {
     // Find all projects where the logged-in user is either the owner or a member
-    const projects = await Project.find({
-      $or: [{ owner: req.user.id }, { members: req.user.id }],
-    }).populate("owner members", "name email"); // Populate user details
-
+    // const projects = await Project.find({
+    //   $or: [{ owner: req.user.id }, { members: req.user.id }],
+    // }).populate("owner members", "name email"); // Populate user details
+// Find all projects, no user filtering
+const projects = await Project.find({}).populate("owner members", "name email"); // An empty filter {} fetches all documents
     res.status(200).json(projects);
   } catch (error) {
     console.error("Error getting projects:", error);
