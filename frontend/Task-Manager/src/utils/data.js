@@ -4,7 +4,7 @@ import {
     LuClipboardCheck,
     LuSquarePlus,
     LuLogOut,
-    LuSheet,
+    LuSheet,   
 } from "react-icons/lu"
 
 export const SIDE_MENU_DATA=[
@@ -33,6 +33,12 @@ export const SIDE_MENU_DATA=[
         path:"/admin/users",
     },
     {
+        id:"07",
+      label: "My Day View",
+      path: "/day-view",
+      icon: LuLayoutDashboard ,
+    },
+    {
         id:"06",
     label: "Shared Sheet",
     path: "/shared-sheet",
@@ -58,6 +64,12 @@ export const SIDE_MENU_USER_DATA=[
         label:"My Tasks",
         icon:LuClipboardCheck,
         path:"/user/tasks",
+    },
+    {
+        id:"07",
+      label: "My Day View",
+      path: "/day-view",
+      icon: LuLayoutDashboard ,
     },
     {
         id:"06",

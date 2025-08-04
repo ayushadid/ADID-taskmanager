@@ -7,7 +7,7 @@ import {
     Navigate,
 } from "react-router-dom";
 import Login from './pages/Auth/Login';
-import Signup from './pages/Auth/SignUp';
+import Signup from './pages/Auth/Signup';
 import PrivateRoute from './routes/PrivateRoute';
 import Dashboard from './pages/Admin/Dashboard';
 import ManageTasks from './pages/Admin/ManageTasks';
@@ -19,6 +19,7 @@ import ViewTaskDetails from './pages/User/ViewTaskDetails';
 import TaskTimeLogsPage from './pages/User/TaskTimeLogsPage';
 import TaskCalendar from './pages/Admin/TaskCalendar';
 import SharedSheet from './pages/Admin/SharedSheet'; // Add this line
+import DailyLogChart from './pages/Admin/DailyLogChart';
 import UserProvider, { UserContext } from './context/userContext';
 import { Toaster } from 'react-hot-toast';
 
@@ -43,6 +44,7 @@ const App = () => {
                             <Route path="/admin/users" element={<ManageUsers />} />
                             <Route path="/admin/calendar" element={<TaskCalendar />} />
                             <Route path="/shared-sheet" element={<SharedSheet />} />
+                            <Route path="/day-view" element={<DailyLogChart />} />
                             {/* NEW ROUTE FOR USER-SPECIFIC TASKS (Admin Only) */}
                             {/* This path matches what was used in UserCard.jsx: /manage-users/:userId/tasks */}
                             <Route path="/admin/users/:userId/tasks" element={<UserTasksDetails />} />
@@ -54,6 +56,7 @@ const App = () => {
                             <Route path="/user/dashboard" element={<UserDashboard />} />
                             <Route path="/user/tasks" element={<MyTasks />} />
                             <Route path="/shared-sheet" element={<SharedSheet />} />
+                            <Route path="/day-view" element={<DailyLogChart />} />
                             <Route path="/user/task-details/:id" element={<ViewTaskDetails />} />
                             <Route path="/user/tasks/:taskId/timelogs" element={<TaskTimeLogsPage />} />
                         </Route>

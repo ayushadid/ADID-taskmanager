@@ -35,6 +35,9 @@ export const API_PATHS={
         GET_ACTIVE_TIMER: (taskId) => `/api/tasks/${taskId}/timelogs/active`,
         GET_TASK_TIMELOGS: (taskId) => `/api/tasks/${taskId}/timelogs`,
     },
+    TIMELOGS: {
+      GET_BY_DAY: (userId) => `/api/timelogs/day/${userId}`,
+    },
     PROJECTS: {
     CREATE_PROJECT: "/api/projects", // To create a new project
     GET_MY_PROJECTS: "/api/projects", // To get projects for the logged-in user
