@@ -7,7 +7,7 @@ import {
     Navigate,
 } from "react-router-dom";
 import Login from './pages/Auth/Login';
-import Signup from './pages/Auth/Signup';
+import Signup from './pages/Auth/SignUp';
 import PrivateRoute from './routes/PrivateRoute';
 import Dashboard from './pages/Admin/Dashboard';
 import ManageTasks from './pages/Admin/ManageTasks';
