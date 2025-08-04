@@ -21,6 +21,8 @@ const ManageTasks = () => {
 
     const { user } = useContext(UserContext); // ✨ 2. Get the current user
     const navigate = useNavigate();
+    const [projects, setProjects] = useState([]);
+    const [selectedProject, setSelectedProject] = useState('all');
 
     // ✨ 3. This function now only fetches ALL tasks, once.
     const getAllTasks = async () => {
@@ -45,6 +47,19 @@ const ManageTasks = () => {
             console.error("Error fetching tasks", error);
         }
     };
+    useEffect(() => {
+    const fetchProjects = async () => {
+        try {
+            const response = await axiosInstance.get(API_PATHS.PROJECTS.GET_ALL_PROJECTS);
+            setProjects(response.data || []);
+        } catch (error) {
+            console.error("Error fetching projects", error);
+        }
+    };
+
+    getAllTasks();
+    fetchProjects(); // 👈 Call the new function here
+}, []);
 
     // ✨ 4. This useEffect fetches the data only when the component mounts
     useEffect(() => {
@@ -66,10 +81,13 @@ const ManageTasks = () => {
         if (filterStatus !== 'All') {
             filtered = filtered.filter(task => task.status === filterStatus);
         }
+        if (selectedProject !== 'all') {
+        filtered = filtered.filter(task => task.project?._id === selectedProject);
+    }
 
         setDisplayedTasks(filtered);
 
-    }, [filterStatus, assignmentFilter, allTasks, user]);
+    }, [filterStatus, assignmentFilter, selectedProject, allTasks, user]);
 
 
     const handleClick = (taskData) => {
@@ -92,6 +110,18 @@ const ManageTasks = () => {
                 <div className='flex flex-col md:flex-row md:items-center justify-between'>
                     <div className='flex items-center gap-4'>
                         <h2 className='text-xl md:text-xl font-medium'>Manage Tasks</h2>
+                         <select
+        className="bg-white border border-slate-300 rounded-md text-sm font-medium focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200 px-3 py-1"
+        value={selectedProject}
+        onChange={(e) => setSelectedProject(e.target.value)}
+    >
+        <option value="all">All Projects</option>
+        {projects.map((project) => (
+            <option key={project._id} value={project._id}>
+                {project.name}
+            </option>
+        ))}
+    </select>
                         {/* UI buttons for the new filter */}
                         <div className='flex items-center p-1 bg-slate-200 rounded-md'>
                             <button

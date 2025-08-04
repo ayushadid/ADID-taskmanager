@@ -1,6 +1,5 @@
 export const BASE_URL = import.meta.env.VITE_API_URL;
 
-//utils/apiPaths.js
 export const API_PATHS={
     AUTH: {
         REGISTER:"/api/auth/register", //Register a new user(Admin or Member)
@@ -36,6 +35,11 @@ export const API_PATHS={
         GET_ACTIVE_TIMER: (taskId) => `/api/tasks/${taskId}/timelogs/active`,
         GET_TASK_TIMELOGS: (taskId) => `/api/tasks/${taskId}/timelogs`,
     },
+    PROJECTS: {
+    CREATE_PROJECT: "/api/projects", // To create a new project
+    GET_MY_PROJECTS: "/api/projects", // To get projects for the logged-in user
+    GET_ALL_PROJECTS: "/api/projects/all", // To get all projects (Admin Only)
+  },
 
     REPORTS:{
         EXPORT_TASKS:"/api/reports/exports/tasks",

@@ -182,95 +182,99 @@ const stopTimer = async (req, res) => {
 //@route GET /api/tasks/
 //@access Private
 const getTasks = async (req, res) => {
-    try {
-        const { status } = req.query;
-        let filter = {};
-        if (status) {
-            filter.status = status;
-        }
-
-        let tasks;
-        const isUserAdmin = req.user.role === "admin";
-
-        // Define population options
-        const populateOptions = [
-            { path: "assignedTo", select: "name email profileImageUrl" },
-        ];
-
-        // Conditionally add remarks population if the user is an admin
-        if (isUserAdmin) {
-            populateOptions.push({ path: "remarks.madeBy", select: "name email profileImageUrl" });
-        }
-
-        // --- MODIFICATION: Add .sort({ createdAt: -1 }) to both queries ---
-        if (isUserAdmin) { // Admin fetches all tasks
-            tasks = await Task.find(filter)
-                              .populate(populateOptions)
-                              .sort({ createdAt: -1 }); // Sort by creation date, newest first
-        } else { // Non-admin (member) fetches only tasks assigned to them
-            tasks = await Task.find({ ...filter, assignedTo: req.user._id })
-                              .populate(populateOptions)
-                              .sort({ createdAt: -1 }); // Sort by creation date, newest first
-        }
-        // --- END MODIFICATION ---
-
-        // Add completed todoChecklist count to each task and conditionally remove remarks for non-admins
-        tasks = await Promise.all(
-            tasks.map(async (task) => {
-                const completedCount = task.todoChecklist.filter(
-                    (item) => item.completed
-                ).length;
-
-                // Create a mutable copy of the task document
-                const taskObject = task.toObject(); // Use .toObject() for Mongoose documents
-
-                // Correcting the typo `compltedTodoCount` to `completedTodoCount`
-                taskObject.completedTodoCount = completedCount;
-                // If you had a line like `delete taskObject.compltedTodoCount;` previously, you can remove it.
-
-                // If the user is NOT an admin, delete the remarks field
-                if (!isUserAdmin) {
-                    delete taskObject.remarks;
-                }
-                return taskObject;
-            })
-        );
-
-        // Status Summary Counts (already correctly handles admin/non-admin logic)
-        const allTasks = await Task.countDocuments(
-            isUserAdmin ? {} : { assignedTo: req.user._id }
-        );
-        const pendingTasks = await Task.countDocuments({
-            ...filter,
-            status: "Pending",
-            ...(isUserAdmin ? {} : { assignedTo: req.user._id }), // Conditionally apply assignedTo filter
-        });
-
-        const inProgressTasks = await Task.countDocuments({
-            ...filter,
-            status: "In Progress",
-            ...(isUserAdmin ? {} : { assignedTo: req.user._id }),
-        });
-
-        const completedTasks = await Task.countDocuments({
-            ...filter,
-            status: "Completed",
-            ...(isUserAdmin ? {} : { assignedTo: req.user._id }),
-        });
-
-        res.json({
-            tasks,
-            statusSummary: {
-                all: allTasks,
-                pendingTasks,
-                inProgressTasks,
-                completedTasks,
-            },
-        });
-    } catch (error) {
-        console.error("Error in getTasks:", error);
-        res.status(500).json({ message: "Server Error ", error: error.message });
+  try {
+    // 👇 Step 1: Get projectId from the query
+    const { status, projectId } = req.query;
+    let filter = {};
+    if (status) {
+      filter.status = status;
     }
+    // 👇 Step 2: Add projectId to the filter if it exists
+    if (projectId) {
+      filter.project = projectId;
+    }
+
+    let tasks;
+    const isUserAdmin = req.user.role === "admin";
+
+    // 👇 Step 3: Add project to the population options
+    const populateOptions = [
+      { path: "assignedTo", select: "name email profileImageUrl" },
+      { path: "project", select: "name" }, // Populate the project's name
+    ];
+
+    if (isUserAdmin) {
+      populateOptions.push({
+        path: "remarks.madeBy",
+        select: "name email profileImageUrl",
+      });
+    }
+
+    // The find queries will now automatically use the project filter
+    if (isUserAdmin) {
+      tasks = await Task.find(filter)
+        .populate(populateOptions)
+        .sort({ createdAt: -1 });
+    } else {
+      tasks = await Task.find({ ...filter, assignedTo: req.user._id })
+        .populate(populateOptions)
+        .sort({ createdAt: -1 });
+    }
+
+    // Add completed todoChecklist count to each task and conditionally remove remarks for non-admins
+    tasks = await Promise.all(
+      tasks.map(async (task) => {
+        const completedCount = task.todoChecklist.filter(
+          (item) => item.completed
+        ).length;
+        const taskObject = task.toObject();
+        taskObject.completedTodoCount = completedCount;
+        if (!isUserAdmin) {
+          delete taskObject.remarks;
+        }
+        return taskObject;
+      })
+    );
+
+    // 👇 Step 4: Update summary counts to respect the project filter
+    const baseFilterForCounts = {};
+    if (!isUserAdmin) {
+      baseFilterForCounts.assignedTo = req.user._id;
+    }
+    if (projectId) {
+      baseFilterForCounts.project = projectId;
+    }
+
+    const allTasks = await Task.countDocuments(baseFilterForCounts);
+
+    const pendingTasks = await Task.countDocuments({
+      ...baseFilterForCounts,
+      status: "Pending",
+    });
+
+    const inProgressTasks = await Task.countDocuments({
+      ...baseFilterForCounts,
+      status: "In Progress",
+    });
+
+    const completedTasks = await Task.countDocuments({
+      ...baseFilterForCounts,
+      status: "Completed",
+    });
+
+    res.json({
+      tasks,
+      statusSummary: {
+        all: allTasks,
+        pendingTasks,
+        inProgressTasks,
+        completedTasks,
+      },
+    });
+  } catch (error) {
+    console.error("Error in getTasks:", error);
+    res.status(500).json({ message: "Server Error ", error: error.message });
+  }
 };
 // Add this new function to your module.exports
 // @desc Get tasks for a specific user (Admin only)
@@ -384,7 +388,8 @@ const getTaskById = async (req, res) => {
         // Always populate the remarks for any user viewing the task
         const populateOptions = [
             { path: "assignedTo", select: "name email profileImageUrl" },
-            { path: "remarks.madeBy", select: "name email profileImageUrl" } // This is now always included
+            { path: "remarks.madeBy", select: "name email profileImageUrl" } ,
+            { path: "project", select: "name" },// This is now always included
         ];
 
         /* // REMOVED: Conditional population
@@ -425,6 +430,7 @@ const getTaskById = async (req, res) => {
 const createTask=async(req,res)=>{
 try{
     const{
+        project,
         title,
         description,
         priority,
@@ -434,6 +440,10 @@ try{
         todoChecklist,
     }=req.body;
 
+    if (!project) {
+      res.status(400);
+      throw new Error("Project ID is required");
+    }
     if(!Array.isArray(assignedTo)){
         return res
             .status(400)
@@ -441,6 +451,7 @@ try{
     }
 
     const task=await Task.create({
+        project,
         title,
         description,
         priority,
@@ -473,6 +484,7 @@ try{
     task.dueDate=req.body.dueDate||task.dueDate;
     task.todoChecklist=req.body.todoChecklist||task.todoChecklist;
     task.attachments=req.body.attachments||task.attachments;
+    task.project = req.body.project || task.project;
 
     if(req.body.assignedTo){
         if(!Array.isArray(req.body.assignedTo)){
@@ -484,6 +496,7 @@ try{
     }
 
     const updatedTask=await task.save();
+    await updatedTask.populate({ path: "project", select: "name" });
     res.json({message:"Task updated successfully", updatedTask});
     }catch(error){
         res.status(500).json({message:"Server Error ",error:error.message});

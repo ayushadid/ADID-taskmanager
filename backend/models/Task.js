@@ -17,6 +17,11 @@ const remarkSchema = new mongoose.Schema(
 
 const TaskSchema=new mongoose.Schema(
     {
+        project: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Project",
+            required: true,
+        },
         title: {type:String, required:true},
         description:{type:String},
         priority:{type:String, enum: ["Low","Medium","High"],default:"Medium"},

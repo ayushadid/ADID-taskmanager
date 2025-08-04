@@ -19,8 +19,10 @@ const CreateTask = () => {
   const location=useLocation();
   const{taskId}=location.state||{};
   const navigate=useNavigate();
+  const [projects, setProjects] = useState([]);
 
   const [taskData,setTaskData]=useState({
+    project:"",
     title:"",
     description:"",
     priority:"Low",
@@ -30,6 +32,28 @@ const CreateTask = () => {
     todoChecklist:[],
     attachments:[],
   });
+  
+ // In CreateTask.jsx
+
+const fetchAllProjects = async () => {
+  try {
+    const response = await axiosInstance.get(API_PATHS.PROJECTS.GET_ALL_PROJECTS);
+    
+    // 👇 Change '_id' to 'value' and 'name' to 'label' here
+    const formattedProjects = response.data.map((project) => ({
+      value: project._id,
+      label: project.name,
+    }));
+
+    setProjects(formattedProjects);
+  } catch (error) {
+    console.error("Error fetching projects", error);
+    toast.error("Could not load projects.");
+  }
+};
+useEffect(() => {
+  fetchAllProjects(); // Call the function to fetch projects
+}, []);
 
   const [currentTask,setCurrentTask]=useState(null);
 
@@ -44,6 +68,7 @@ const CreateTask = () => {
 
   const clearData=()=>{
     setTaskData({
+      project:"",
       title:"",
       description:"",
       priority:"Low",
@@ -104,6 +129,10 @@ const CreateTask = () => {
   const handleSubmit=async()=>{
     setError(null);
 
+    if (!taskData.project) {
+      setError("Please select a project");
+      return;
+    }
     if(!taskData.title.trim()){
       setError("Title is required");
       return;
@@ -144,6 +173,7 @@ const CreateTask = () => {
         setCurrentTask(taskInfo);
 
         setTaskData((prevData)=>({
+          project:taskInfo.project?._id || "",
           title:taskInfo.title,
           description:taskInfo.description,
           priority:taskInfo.priority,
@@ -229,14 +259,12 @@ useEffect(() => {
     };
 
 }, [taskData.todoChecklist, taskId, updateChecklistOnBackend]);
-  useEffect(()=>{
-    if(taskId){
-      getTaskDetailsById(taskId)
-    }
-    return ()=>{
-      
-    }
-  },[taskId])
+useEffect(() => {
+  // Only fetch the task's details if we have a taskId AND the projects have been loaded.
+  if (taskId && projects.length > 0) {
+    getTaskDetailsById();
+  }
+}, [taskId, projects]); // 👈 Add 'projects' to the dependency array
 
   // Add this inside your CreateTask component
 const getStatusTagColor = (status) => {
@@ -280,6 +308,15 @@ const getStatusTagColor = (status) => {
       <LuTrash2 className="text-base" /> Delete
     </button>
   )}
+</div>
+<div className="mt-4">
+  <label className="text-xs font-medium text-slate-600">Project</label>
+  <SelectDropdown
+    options={projects}
+    value={taskData.project}
+    onChange={(value) => handleValueChange("project", value)}
+    placeholder="Select a Project"
+  />
 </div>
           <div className='mt-4'>
             <label className="text-xs font-medium text-slate-600">

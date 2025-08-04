@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import Progress from '../Progress';
 import { LuPaperclip } from 'react-icons/lu';
 import moment from 'moment';
-import { FaPlayCircle, FaPauseCircle, FaRegClock } from 'react-icons/fa'; // Play/Pause icons
+import { FaPlayCircle, FaPauseCircle, FaRegClock } from 'react-icons/fa';
+// In TaskCard.jsx
+import {LuFolderKanban } from 'react-icons/lu'; // Play/Pause icons
 import axiosInstance from '../../utils/axiosinstance';
 import { API_PATHS } from '../../utils/apiPaths';
 import toast from 'react-hot-toast';
@@ -31,6 +33,7 @@ const TaskCard = ({
     assignedTo, // Already populated with user objects from backend
     attachments,
     completedTodoCount,
+    project,
     todoChecklist,
   } = task;
 
@@ -184,6 +187,12 @@ return (
                     <div className={`text-[11px] font-medium ${getPriorityTagColor()} px-3 py-0.5 rounded`}>
                         {priority} Priority
                     </div>
+                    {project?.name && (
+        <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600 bg-slate-100 border border-slate-200/80 px-3 py-0.5 rounded">
+            <LuFolderKanban />
+            {project.name}
+        </div>
+    )}
                 </div>
 
                 {/* Task Info */}
