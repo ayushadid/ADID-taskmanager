@@ -31,7 +31,7 @@ const TodoListInput = ({ todoList, setTodoList }) => {
       {/* List of existing todo items */}
       {todoList?.map((item, index) => (
         <div
-          key={index}
+          key={item._id || `new-todo-${index}`}
           className="flex items-center justify-between p-2 bg-gray-50 border border-gray-100 rounded-md mb-2"
         >
           <div className="flex items-center gap-3">
