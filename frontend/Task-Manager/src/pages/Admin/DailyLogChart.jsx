@@ -30,19 +30,17 @@ const AdminDayView = () => {
   const [date, setDate] = useState(new Date());
   const [series, setSeries] = useState([]);
   const [users, setUsers] = useState([]);
-  const [selectedUserId, setSelectedUserId] = useState('');
+  // 1. Default the view to "all" to show the team view first
+  const [selectedUserId, setSelectedUserId] = useState('all');
   const navigate = useNavigate();
-  const [chartHeight, setChartHeight] = useState(200); // State for dynamic chart height
+  const [chartHeight, setChartHeight] = useState(200);
 
-  // Fetch all users for the dropdown
+  // Fetch all users for the dropdown (no change here)
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const response = await axiosInstance.get(API_PATHS.USERS.GET_ALL_USERS);
         setUsers(response.data || []);
-        if (response.data?.length > 0) {
-          setSelectedUserId(response.data[0]._id); // Default to the first user
-        }
       } catch (error) {
         toast.error("Could not fetch users.");
         console.error("Error fetching users:", error);
@@ -51,29 +49,47 @@ const AdminDayView = () => {
     fetchUsers();
   }, []);
 
-  // Fetch time logs when the selected user or date changes
+  // 2. This useEffect now handles both "All Users" and individual user views
   useEffect(() => {
-    if (!selectedUserId) return; // Don't fetch if no user is selected
-
     const fetchTimeLogs = async () => {
       try {
         const formattedDate = formatDateForInput(date);
-        const response = await axiosInstance.get(API_PATHS.TIMELOGS.GET_BY_DAY(selectedUserId), {
-          params: { date: formattedDate },
-        });
+        let response;
+        let chartData;
 
-        const chartData = response.data.map(log => ({
-          x: log.task.title,
-          y: [ new Date(log.startTime).getTime(), new Date(log.endTime).getTime() ],
-          taskId: log.task._id,
-        }));
+        if (selectedUserId === 'all') {
+          // Fetch data from the new "all users" endpoint
+          response = await axiosInstance.get(API_PATHS.TIMELOGS.GET_ALL_BY_DAY, {
+            params: { date: formattedDate },
+          });
+          // Transform data with user name on the Y-axis
+          chartData = response.data.map(log => ({
+            x: log.user.name, // Use user's name as the category
+            y: [ new Date(log.startTime).getTime(), new Date(log.endTime).getTime() ],
+            taskId: log.task._id,
+            taskTitle: log.task.title, // Store task title for the tooltip
+          }));
+        } else {
+          // Fetch data for a single user (existing logic)
+          response = await axiosInstance.get(API_PATHS.TIMELOGS.GET_BY_DAY(selectedUserId), {
+            params: { date: formattedDate },
+          });
+          // Transform data with task title on the Y-axis
+          chartData = response.data.map(log => ({
+            x: log.task.title, // Use task's title as the category
+            y: [ new Date(log.startTime).getTime(), new Date(log.endTime).getTime() ],
+            taskId: log.task._id,
+          }));
+        }
+
         setSeries([{ data: chartData }]);
 
-        // Calculate and set the dynamic height
-        const baseHeight = 100; // Base height for padding and axes
-        const heightPerTask = 65; // Pixels per task row
-        const newHeight = baseHeight + (chartData.length * heightPerTask);
-        setChartHeight(Math.max(newHeight, 200)); // Set a minimum height
+        // Dynamically calculate height based on number of unique rows
+        const uniqueYCategories = [...new Set(chartData.map(d => d.x))].length;
+        const baseHeight = 100;
+        const heightPerCategory = 65;
+        const newHeight = baseHeight + (uniqueYCategories * heightPerCategory);
+        setChartHeight(Math.max(newHeight, 250));
 
       } catch (error) {
         console.error("Error fetching time logs:", error);
@@ -93,6 +109,9 @@ const AdminDayView = () => {
     chart: {
       type: 'rangeBar',
       height: 450,
+      zoom: {
+      enabled: true,
+    },
       toolbar: { show: false },
       events: {
         dataPointSelection: (event, chartContext, config) => {
@@ -101,50 +120,28 @@ const AdminDayView = () => {
         },
       },
     },
-    plotOptions: {
-      bar: {
-        horizontal: true,
-        borderRadius: 10,
-        barHeight: '35%',
-        rangeBarGroupRows: true,
-      },
-    },
-    xaxis: {
-      type: 'datetime',
-      min: startOfDay.getTime(),
-      max: endOfDay.getTime(),
-      labels: { datetimeUTC: false, format: 'HH:mm' },
-      axisBorder: { show: false },
-      axisTicks: { show: true },
-    },
-    yaxis: {
-      show: true,
-      labels: {
-        style: {
-          fontSize: '14px',
-          fontWeight: 500,
-        }
-      }
-    },
-    grid: {
-      show: true,
-      borderColor: '#e0e0e0',
-      strokeDashArray: 4,
-      xaxis: { lines: { show: true } },
-      yaxis: { lines: { show: false } },
-    },
+    plotOptions: { bar: { horizontal: true, borderRadius: 10, barHeight: '35%', rangeBarGroupRows: true, } },
+    xaxis: { type: 'datetime', min: startOfDay.getTime(), max: endOfDay.getTime(), labels: { datetimeUTC: false, format: 'HH:mm' }, axisBorder: { show: false }, axisTicks: { show: true }, },
+    yaxis: { show: true, labels: { style: { fontSize: '14px', fontWeight: 500, } } },
+    grid: { show: true, borderColor: '#e0e0e0', strokeDashArray: 4, xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } }, },
     dataLabels: { enabled: false },
     tooltip: {
+      // 3. The tooltip now intelligently shows the task title in the "All Users" view
       custom: function({ series, seriesIndex, dataPointIndex, w }) {
         const yData = w.config.series[seriesIndex].data[dataPointIndex].y;
         const start = yData[0];
         const end = yData[1];
-        const taskName = w.globals.labels[dataPointIndex];
-        if (typeof start === 'number' && typeof end === 'number') {
-          const duration = formatDuration(end - start);
-          return `<div class="p-2"><strong>Task:</strong> ${taskName}<br><strong>Duration:</strong> ${duration}</div>`;
-        }
-        return `<div class="p-2"><strong>Task:</strong> ${taskName}</div>`;
+        const categoryName = w.globals.labels[dataPointIndex];
+        const taskTitle = w.config.series[seriesIndex].data[dataPointIndex].taskTitle;
+        const duration = formatDuration(end - start);
+        
+        const taskHtml = taskTitle ? `<strong>Task:</strong> ${taskTitle}<br>` : '';
+
+        return `<div class="p-2">
+                  <strong>${selectedUserId === 'all' ? 'User' : 'Task'}:</strong> ${categoryName}<br>
+                  ${taskHtml}
+                  <strong>Duration:</strong> ${duration}
+                </div>`;
       }
     },
     fill: { type: 'solid', colors: ['#008FFB'] },
@@ -160,13 +157,14 @@ const AdminDayView = () => {
       <div className="card mt-6">
         <div className="flex items-center gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Select User</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Select View</label>
             <select
               className="form-input w-auto"
               value={selectedUserId}
               onChange={(e) => setSelectedUserId(e.target.value)}
             >
-              <option value="" disabled>-- Select a User --</option>
+              {/* 4. The "All Users" option is added to the dropdown */}
+              <option value="all">All Users</option>
               {users.map(user => (
                 <option key={user._id} value={user._id}>{user.name}</option>
               ))}
@@ -185,7 +183,7 @@ const AdminDayView = () => {
         {series[0]?.data.length > 0 ? (
           <Chart options={options} series={series} type="rangeBar" height={chartHeight} />
         ) : (
-          <div className="text-center py-10 text-gray-500">No time logs found for this user on this day.</div>
+          <div className="text-center py-10 text-gray-500">No time logs found for this selection.</div>
         )}
       </div>
     </DashboardLayout>
