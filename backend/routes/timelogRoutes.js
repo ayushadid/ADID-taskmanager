@@ -1,9 +1,18 @@
+// In backend/routes/timelogRoutes.js
+
 const express = require("express");
 const router = express.Router();
-const { getTimeLogsByDay } = require("../controllers/timelogController");
-const { protect } = require("../middlewares/authMiddleware");
+// 👇 1. Import the new function
+const { getTimeLogsByDay, getAllTimeLogsByDay,getActiveTimelogs } = require("../controllers/timelogController");
+const { protect, adminOnly } = require("../middlewares/authMiddleware"); // Import adminOnly
 
-// Route now includes :userId
+// Route for individual user logs
 router.get("/day/:userId", protect, getTimeLogsByDay);
+
+// 👇 2. Add the new admin-only route for all user logs
+router.get("/all-by-day", protect, adminOnly, getAllTimeLogsByDay);
+
+router.get("/active", protect, adminOnly, getActiveTimelogs);
+
 
 module.exports = router;
