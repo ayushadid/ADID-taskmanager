@@ -150,6 +150,7 @@ const ManageTasks = () => {
                 </div>
                 {tasksToRender.length === 0 && (
                     <div className="text-center py-10 text-gray-500 col-span-3">
+                        
                         {showLiveOnly ? "No tasks are currently active." : "No tasks match the current filters."}
                     </div>
                 )}
