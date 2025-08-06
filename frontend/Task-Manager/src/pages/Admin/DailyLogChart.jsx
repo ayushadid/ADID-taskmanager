@@ -97,7 +97,7 @@ const AdminDayView = () => {
       events: {
         dataPointSelection: (event, chartContext, config) => {
           const { taskId } = config.w.config.series[config.seriesIndex].data[config.dataPointIndex];
-          if (taskId) navigate('/admin/create-task', { state: { taskId } });
+          if (taskId) navigate(`/user/tasks/${taskId}/timelogs`);
         },
       },
     },
